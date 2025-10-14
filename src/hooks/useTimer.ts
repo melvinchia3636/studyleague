@@ -53,6 +53,7 @@ export const useTimer = (config: TimerConfig): UseTimerReturn => {
     setIsRunning(false)
   }, [])
 
+  // reset to initial duration
   const reset = useCallback(() => {
     setIsRunning(false)
     setTimeLeft(config.duration)

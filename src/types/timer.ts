@@ -1,3 +1,6 @@
+// src/types/timer.ts
+// Timer types and interfaces
+
 export interface TimerState {
   timeLeft: number
   isRunning: boolean
