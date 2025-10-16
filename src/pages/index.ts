@@ -1,4 +1,6 @@
 export { Home } from './Home'
 export { TimerPage } from './TimerPage'
-export { Settings } from './Settings'
+export { StudyRooms } from './StudyRooms'
+export { Login } from './Login'
 export { About } from './About'
+export { Discussions } from './Discussions'
