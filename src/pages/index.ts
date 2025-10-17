@@ -1,6 +1,8 @@
 export { Home } from './Home'
 export { TimerPage } from './TimerPage'
 export { StudyRooms } from './StudyRooms'
+export { Stats } from './Stats'
 export { Login } from './Login'
 export { About } from './About'
 export { Discussions } from './Discussions'
+export { Achievements } from './Achievements'

@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { UserProvider } from './contexts/UserContext'
 import { Layout } from './components'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { Home, TimerPage, StudyRooms, Login, About, Discussions } from './pages'
+import { Home, TimerPage, StudyRooms, Stats, Login, About, Discussions, Achievements } from './pages'
 import './App.css'
 
 function App() {
@@ -25,9 +25,9 @@ function App() {
 					<Route path="timer" element={<TimerPage />} />
 					<Route path="study-rooms" element={<StudyRooms />} />
 					<Route path="about" element={<About />} />
-					<Route path="discussions" element={<div>To Be Implemented</div>} />
-					<Route path="stats" element={<div>To Be Implemented</div>} />
-					<Route path="achievements" element={<div>To Be Implemented</div>} />
+					<Route path="discussions" element={<Discussions />} />
+					<Route path="stats" element={<Stats />} />
+					<Route path="achievements" element={<Achievements />} />
 					<Route path="*" element={<div>Page Not Found</div>} />
 				</Route>
 			</Routes>

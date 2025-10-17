@@ -2,11 +2,16 @@ import { useState } from 'react'
 import { Icon } from '@iconify/react'
 import { Timer } from '../components/Timer/Timer'
 import { TIMER_DURATIONS } from '../constants/timer'
+import { POCKETBASE_URL } from '../constants/server'
+import { useStudyRooms } from '../hooks/useStudyRooms'
+import { useUser } from '../contexts/UserContext'
 
 export const StudyRooms = () => {
 	const [searchQuery, setSearchQuery] = useState('')
 	const [showSoloTimer, setShowSoloTimer] = useState(false)
 	const [selectedDuration, setSelectedDuration] = useState(TIMER_DURATIONS.POMODORO)
+	const { user } = useUser()
+	const { rooms, loading: roomsLoading, error: roomsError, createRoom } = useStudyRooms()
 
 	const soloStudyOptions = [
 		{ name: 'Pomodoro (25 min)', duration: TIMER_DURATIONS.POMODORO, icon: 'material-symbols:timer' },
@@ -15,64 +20,20 @@ export const StudyRooms = () => {
 		{ name: 'Custom Timer', duration: 0, icon: 'material-symbols:edit' },
 	]
 
-	const studyRooms = [
-		{
-			id: 1,
-			name: 'Focus Room (25 mins)',
-			type: 'Public Room',
-			participants: 50,
-			duration: '25m',
-			features: ['silent', 'video', 'chat'],
-			image: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-		},
-		{
-			id: 2,
-			name: 'Deep Work Session',
-			type: 'Public Room',
-			participants: 32,
-			duration: '90m',
-			features: ['silent', 'video'],
-			image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-		},
-		{
-			id: 3,
-			name: 'Study Group - Math',
-			type: 'Subject Room',
-			participants: 15,
-			duration: '60m',
-			features: ['chat', 'voice', 'screen-share'],
-			image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-		},
-		{
-			id: 4,
-			name: 'Language Learning',
-			type: 'Subject Room',
-			participants: 28,
-			duration: '45m',
-			features: ['chat', 'voice'],
-			image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-		},
-		{
-			id: 5,
-			name: 'Coding Bootcamp',
-			type: 'Subject Room',
-			participants: 22,
-			duration: '120m',
-			features: ['silent', 'screen-share', 'chat'],
-			image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-		},
-		{
-			id: 6,
-			name: 'Medical Study Group',
-			type: 'Subject Room',
-			participants: 18,
-			duration: '75m',
-			features: ['chat', 'voice', 'video'],
-			image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-		},
-	]
+	// Transform API rooms data for the UI
+	const transformedRooms = rooms.map(room => ({
+		id: parseInt(room.id),
+		name: room.room_name,
+		type: room.isPublic ? 'Public Room' : 'Private Room',
+		participants: `${room.participants}/${room.max_participants}`, // Mock participant count for now
+		duration: `${room.timing}m`, // Default duration for now
+		features: ['chat', 'video'], // Default features for now
+		image: `${POCKETBASE_URL}/api/files/study_rooms/${room.id}/${room.thumbnail}` || 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+		maxParticipants: room.maxParticipants,
+		host: room.host
+	}))
 
-	const filteredRooms = studyRooms.filter(room =>
+	const filteredRooms = transformedRooms.filter(room =>
 		room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		room.type.toLowerCase().includes(searchQuery.toLowerCase())
 	)
@@ -163,54 +124,73 @@ export const StudyRooms = () => {
 			<div className="mb-8">
 				<h2 className="text-xl font-semibold text-gray-900 mb-6">Available Study Rooms</h2>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{filteredRooms.map((room) => (
-						<div key={room.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-							{/* Room Image */}
-							<div className="relative h-40 bg-gray-100">
-								<img
-									src={room.image}
-									alt={room.name}
-									className="w-full h-full object-cover"
-								/>
+				{roomsLoading ? (
+					<div className="flex items-center justify-center py-12">
+						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+						<span className="ml-3 text-gray-600">Loading study rooms...</span>
+					</div>
+				) : roomsError ? (
+					<div className="text-center py-12">
+						<Icon icon="material-symbols:error" className="text-4xl text-red-500 mb-4 mx-auto" />
+						<p className="text-red-600 mb-4">{roomsError}</p>
+						<button
+							className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+							onClick={() => window.location.reload()}
+						>
+							Try Again
+						</button>
+					</div>
+				) : filteredRooms.length === 0 ? (
+					<div className="text-center py-12">
+						<Icon icon="material-symbols:meeting-room" className="text-4xl text-gray-400 mb-4 mx-auto" />
+						<p className="text-gray-600">No study rooms found</p>
+						<p className="text-sm text-gray-500 mt-2">Try adjusting your search or create a new room!</p>
+					</div>
+				) : (
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						{filteredRooms.map((room) => (
+							<div key={room.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+								{/* Room Image */}
+								<div className="relative h-40 bg-gray-100">
+									<img
+										src={room.image}
+										alt={room.name}
+										className="w-full h-full object-cover"
+									/>
 
-								{/* Room Stats Overlay */}
-								<div className="absolute bottom-3 left-3 flex space-x-2">
-									<div className="bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center space-x-1">
-										<Icon icon="material-symbols:person" className="text-sm" />
-										<span>{room.participants}</span>
-									</div>
-									<div className="bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center space-x-1">
-										<Icon icon="material-symbols:schedule" className="text-sm" />
-										<span>{room.duration}</span>
-									</div>
-									{room.features.map((feature, index) => (
-										<div key={index} className="bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center">
-											<Icon icon={getFeatureIcon(feature)} className="text-sm" />
+									{/* Room Stats Overlay */}
+									<div className="absolute bottom-3 left-3 flex space-x-2">
+										<div className="bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center space-x-1">
+											<Icon icon="material-symbols:person" className="text-sm" />
+											<span>{room.participants}</span>
 										</div>
-									))}
+										<div className="bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center space-x-1">
+											<Icon icon="material-symbols:schedule" className="text-sm" />
+											<span>{room.duration}</span>
+										</div>
+										{room.features.map((feature, index) => (
+											<div key={index} className="bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center">
+												<Icon icon={getFeatureIcon(feature)} className="text-sm" />
+											</div>
+										))}
+									</div>
+								</div>
+
+								{/* Room Info */}
+								<div className="p-4">
+									<h3 className="font-semibold text-gray-900 mb-1">{room.name}</h3>
+									<p className="text-sm text-gray-500 mb-4">{room.type}</p>
+
+									<button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
+										<Icon icon="material-symbols:login" className="text-lg" />
+										<span>Join Room</span>
+									</button>
 								</div>
 							</div>
-
-							{/* Room Info */}
-							<div className="p-4">
-								<h3 className="font-semibold text-gray-900 mb-1">{room.name}</h3>
-								<p className="text-sm text-gray-500 mb-4">{room.type}</p>
-
-								<button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
-									<Icon icon="material-symbols:login" className="text-lg" />
-									<span>Join Room</span>
-								</button>
-							</div>
-						</div>
-					))}
-				</div>
-
-				{filteredRooms.length === 0 && (
-					<div className="text-center py-12">
-						<p className="text-gray-500">No study rooms found matching your search.</p>
+						))}
 					</div>
 				)}
+
 			</div>
 		</div>
 	)

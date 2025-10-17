@@ -1,18 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import { Timer } from '../components/Timer/Timer'
 import { TIMER_DURATIONS } from '../constants/timer'
+import { useStudySessions } from '../hooks/useStudySessions'
+import { useStudyTargets } from '../hooks/useStudyTargets'
+import { useUser } from '../contexts/UserContext'
 
 export const Home = () => {
 	const [showTimer, setShowTimer] = useState(false)
+	const { user } = useUser()
+	const { sessions, createSession } = useStudySessions()
+	const { targets } = useStudyTargets()
+
+	// Calculate today's study time from sessions
+	const todayStudyTime = sessions.filter(session => {
+		const sessionDate = new Date(session.startedAt).toDateString()
+		const today = new Date().toDateString()
+		return sessionDate === today && !session.active
+	}).reduce((total, session) => total + session.durationMinutes, 0)
+
+	// Get user's weekly target
+	const userTarget = targets.find(target => target.user === user?.id)
+	const weeklyTargetHours = userTarget?.weeklyTarget || 40 // Default 40 hours
+	const weeklyTargetMinutes = weeklyTargetHours * 60
+
+	// Calculate this week's total study time
+	const weekStart = new Date()
+	weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+	const thisWeekStudyTime = sessions.filter(session => {
+		const sessionDate = new Date(session.startedAt)
+		return sessionDate >= weekStart && !session.active
+	}).reduce((total, session) => total + session.durationMinutes, 0)
+
+	const remainingWeeklyMinutes = Math.max(0, weeklyTargetMinutes - thisWeekStudyTime)
+
+	const formatTime = (minutes: number) => {
+		const hours = Math.floor(minutes / 60)
+		const mins = minutes % 60
+		if (hours === 0) return `${mins}m`
+		return `${hours}.${Math.floor((mins / 60) * 10)}h`
+	}
 
 	const handleStartStudying = () => {
 		setShowTimer(true)
 	}
 
-	const handleTimerComplete = () => {
-		// Handle timer completion
+	const handleTimerComplete = async () => {
+		// Handle timer completion - create a study session record
 		console.log('Timer completed!')
+
+		if (user) {
+			try {
+				await createSession({
+					user: user.id,
+					durationMinutes: Math.floor(TIMER_DURATIONS.POMODORO / 60), // Convert seconds to minutes
+					active: false,
+					startedAt: new Date(Date.now() - TIMER_DURATIONS.POMODORO * 1000).toISOString(),
+					endedAt: new Date().toISOString(),
+					integrityScore: 100 // Assume full completion for now
+				})
+			} catch (error) {
+				console.error('Failed to save study session:', error)
+			}
+		}
+
 		setShowTimer(false)
 	}
 
@@ -36,10 +87,10 @@ export const Home = () => {
 				<div className="lg:col-span-2 bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl p-8 text-white relative overflow-hidden">
 					<div className="relative z-10">
 						<div className="text-sm font-medium mb-2">Today Stats</div>
-						<div className="text-5xl font-bold mb-4">9.2 Hours</div>
+						<div className="text-5xl font-bold mb-4">{formatTime(todayStudyTime)}</div>
 						<div className="text-sm mb-6">
-							<div>"This is a quote."</div>
-							<div className="text-orange-200">--- The designer.</div>
+							<div>"Focus is not about ignoring everything else, it's about paying attention to what matters."</div>
+							<div className="text-orange-200">--- Anonymous</div>
 						</div>
 						<button
 							onClick={handleStartStudying}
@@ -53,31 +104,22 @@ export const Home = () => {
 					<div className="absolute right-0 top-0 w-64 h-64 opacity-20">
 						<div className="w-full h-full bg-gradient-to-br from-white to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
 					</div>
-				</div>				{/* Weekly Goals Card */}
+				</div>
+				{/* Weekly Goals Card */}
 				<div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white relative overflow-hidden">
-					<div className="relative z-10">
-						<div className="text-sm font-medium mb-2">Your Weekly Goals</div>
-						<div className="text-4xl font-bold mb-2">23.9 Hrs</div>
-						<div className="text-indigo-200 text-sm mb-6">Remaining</div>
-
-						{/* Progress visualization */}
-						<div className="relative">
-							<svg className="w-full h-20" viewBox="0 0 200 60">
-								<path
-									d="M20,40 Q60,10 100,30 T180,25"
-									stroke="rgba(255,255,255,0.3)"
-									strokeWidth="2"
-									fill="none"
-								/>
-								<path
-									d="M20,40 Q60,10 100,30 T140,28"
-									stroke="white"
-									strokeWidth="2"
-									fill="none"
-								/>
-								<circle cx="140" cy="28" r="3" fill="white" />
-							</svg>
+					<div className="relative z-10 h-full flex flex-col ">
+						<div className='grow'>
+							<div className="text-sm font-medium mb-2">Your Weekly Goals</div>
+							<div className="text-4xl font-bold mb-2">{formatTime(remainingWeeklyMinutes)}</div>
+							<div className="text-indigo-200 text-sm mb-6">Remaining</div>
 						</div>
+						<button
+							onClick={handleStartStudying}
+							className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2"
+						>
+							<Icon icon="material-symbols:play-arrow" className="text-lg" />
+							<span>Adjust your Target</span>
+						</button>
 					</div>
 				</div>
 			</div>
