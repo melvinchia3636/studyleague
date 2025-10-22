@@ -2,11 +2,16 @@ import React from 'react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '@iconify/react'
-import Input from '../../../components/Input/Input'
-import { login } from '../../../contexts/UserContext'
-import { setError } from '../../../utils/errorHandler'
+import { useUser } from '../../../contexts'
+import Input from '../../../components/ui/Input'
 
-function LoginForm() {
+function LoginForm({
+	onError: setError,
+}: {
+	onError: (msg: string) => void
+}) {
+	const { login } = useUser()
+
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [rememberMe, setRememberMe] = useState(false)
@@ -43,7 +48,6 @@ function LoginForm() {
 				/>
 				<Input
 					label="Password"
-					type={showPassword ? 'text' : 'password'}
 					placeholder="••••••••••••"
 					value={password}
 					setValue={setPassword}
