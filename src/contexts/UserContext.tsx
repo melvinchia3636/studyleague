@@ -119,7 +119,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 		setIsLoading(true)
 		try {
 			// Login API call using the proper auth endpoint
-			const response = await axios.post(`${SERVER_HOST}:${SERVER_PORT}/api/auth/login`, {
+			const response = await axios.post(`${SERVER_HOST}:${SERVER_PORT}/api/users/login`, {
 				email: email,
 				password: password
 			})
@@ -134,7 +134,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 					id: user_id || user.id,
 					name: user.name,
 					email: user.email,
-					avatar: user.avatar ? `${POCKETBASE_URL}/api/files/users/${user_id || user.id}/${user.avatar}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80',
+					avatar: user.avatar ? `${SERVER_HOST}:${SERVER_PORT}/api/files/usPOCKETBASE_URLers/${user_id || user.id}/${user.avatar}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80',
 
 					// To be implemented with preference saved in DB
 					preferences: {
