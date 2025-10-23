@@ -1,22 +1,23 @@
 import { Outlet } from 'react-router-dom'
-import { Navigation } from './Navigation'
-import { TopNavigation } from './TopNavigation'
 
-export const Layout = () => {
-	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Fixed Top Navigation */}
-			<div className="fixed top-0 left-64 right-0 z-30">
-				<TopNavigation />
-			</div>
+import Sidebar from './Sidebar'
+import TopNavigation from './TopNavigation'
 
-			{/* Sidebar Navigation */}
-			<Navigation />
+export default function Layout() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Fixed Top Navigation */}
+      <div className="fixed top-0 right-0 left-64 z-30">
+        <TopNavigation />
+      </div>
 
-			{/* Main Content Area */}
-			<main className="ml-64 pt-24 min-h-screen">
-				<Outlet />
-			</main>
-		</div>
-	)
+      {/* Sidebar Navigation */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <main className="ml-64 min-h-screen pt-24">
+        <Outlet />
+      </main>
+    </div>
+  )
 }

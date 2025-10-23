@@ -1,45 +1,34 @@
-import { useState, useEffect } from "react";
-import { Icon } from "@iconify/react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useUser } from "../../contexts/UserContext";
-import Hero from "./components/Hero";
-import Header from "./components/Header";
-import LoginForm from "./components/LoginForm";
+import { useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
-export const Login = () => {
-  const [error, setError] = useState("");
+import { useUser } from '../../contexts/UserContext'
+import Header from './components/Header'
+import Hero from './components/Hero'
+import LoginForm from './components/LoginForm'
 
-  const { isAuthenticated } = useUser();
-  const navigate = useNavigate();
-  const location = useLocation();
+export default function Login() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const { isAuthenticated } = useUser()
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
+      const from = location.state?.from?.pathname || '/'
+      navigate(from, { replace: true })
     }
-  }, [isAuthenticated, navigate, location.state]);
+  }, [isAuthenticated, navigate, location.state])
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       <Hero />
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
-        <div className="max-w-md w-full space-y-8">
+      <div className="flex w-full items-center justify-center bg-gray-50 p-8 text-gray-700 lg:w-1/2">
+        <div className="w-full max-w-md space-y-8">
           <Header />
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <Icon icon="material-symbols:error" className="text-red-600" />
-                <span className="text-sm font-medium text-red-800">
-                  {error}
-                </span>
-              </div>
-            </div>
-          )}
-          <LoginForm onError={setError} />
+          <LoginForm />
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
